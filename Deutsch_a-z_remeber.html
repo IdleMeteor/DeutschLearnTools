@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>德语字母音标测验 - 可爱小猫版</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap');
+  body {
+    margin: 0; padding: 0;
+    background: #f3eaf7;
+    font-family: 'Nunito', sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px 25px 90px;
+    box-shadow: 0 10px 28px rgba(128,94,169,0.25);
+    border-radius: 16px;
+    color: #40275e;
+    user-select: none;
+    position: relative;
+    min-height: 500px;
+  }
+  h1 {
+    text-align: center;
+    font-weight: 800;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #6c3b9b;
+  }
+  .question {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 1.2rem;
+    border: 2.5px solid #ab7dda;
+    border-radius: 14px;
+    outline-offset: 3px;
+    outline-color: #9b5aca;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+  }
+  input[type="text"]:focus {
+    border-color: #7e44cc;
+    box-shadow: 0 0 15px #9b59ffaa;
+  }
+  #feedback {
+    margin-top: 8px;
+    font-weight: 700;
+    height: 24px;
+  }
+  #feedback.correct {
+    color: #3ba45b;
+  }
+  #feedback.wrong {
+    color: #d6466f;
+  }
+  button {
+    background: #7e44cc;
+    color: white;
+    font-weight: 700;
+    font-size: 1.15rem;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 22px;
+    margin: 16px 12px 0 0;
+    cursor: pointer;
+    box-shadow: 0 5px 15px #905ddbcc;
+    transition: background-color 0.3s ease, transform 0.18s ease;
+    user-select: none;
+  }
+  button:hover:not(:disabled) {
+    background-color: #6c3bb8;
+    transform: scale(1.06);
+    box-shadow: 0 7px 18px #905ddddd;
+  }
+  button:disabled {
+    background-color: #c3a3e0;
+    cursor: default;
+    box-shadow: none;
+  }
+  #score {
+    margin-top: 30px;
+    font-size: 1.7rem;
+    font-weight: 700;
+    text-align: center;
+    color: #5d3a87;
+    user-select: none;
+  }
+  #combo {
+    margin-top: 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-align: center;
+    color: #cc6699;
+    user-select: none;
+    min-height: 28px;
+  }
+  #reward-popup {
+    position: fixed;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 3.8rem;
+    font-weight: 900;
+    color: #e65c99;
+    background: #fce8f1;
+    padding: 26px 60px;
+    border-radius: 30px;
+    box-shadow: 0 0 38px #e65c9988;
+    pointer-events: none;
+    user-select: none;
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1100;
+  }
+  #reward-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  /* 小猫容器 */
+  #character {
+    position: fixed;
+    right: 18px;
+    bottom: 25px;
+    width: 160px;
+    height: 170px;
+    user-select: none;
+    filter: drop-shadow(0 7px 5px #b88bd3aa);
+    cursor: default;
+    transition: transform 0.3s ease;
+  }
+  #character:hover {
+    transform: scale(1.1);
+  }
+</style>
+</head>
+<body>
+
+<h1>德语字母与音标测验</h1>
+
+<div id="quiz-container"></div>
+
+<div style="text-align:center;">
+  <button id="submit-btn">提交答案</button>
+  <button id="next-btn" disabled>下一题</button>
+  <button id="restart-btn" style="display:none;">重新开始</button>
+  <button id="toggle-btn" title="切换题型：字母→音标 / 音标→字母">切换题型</button>
+</div>
+
+<div id="score"></div>
+<div id="combo"></div>
+
+<div id="reward-popup">🎉 答对了！棒棒哒！🎉</div>
+
+<audio id="ding-sound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA="></audio>
+
+<!-- 可爱小猫 SVG -->
+<svg id="character" viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg" aria-label="可爱小猫鼓励">
+  <!-- 身体 -->
+  <ellipse cx="70" cy="110" rx="55" ry="40" fill="#e8d1e7" stroke="#a375a7" stroke-width="2"/>
+  <!-- 头 -->
+  <circle cx="70" cy="55" r="45" fill="#f3ccf3" stroke="#a375a7" stroke-width="2"/>
+  
+  <!-- 耳朵 -->
+  <polygon id="ear-left" points="35,18 18,2 48,28" fill="#f6d3f4" stroke="#a375a7" stroke-width="1.7"/>
+  <polygon id="ear-right" points="105,18 122,2 92,28" fill="#f6d3f4" stroke="#a375a7" stroke-width="1.7"/>
+  
+  <!-- 眼白 -->
+  <ellipse id="eye-left-white" cx="48" cy="55" rx="18" ry="22" fill="white" />
+  <ellipse id="eye-right-white" cx="92" cy="55" rx="18" ry="22" fill="white" />
+  
+  <!-- 瞳孔 -->
+  <circle id="eye-left-pupil" cx="48" cy="55" r="10" fill="#402753"/>
+  <circle id="eye-right-pupil" cx="92" cy="55" r="10" fill="#402753"/>
+  
+  <!-- 眉毛 -->
+  <path id="eyebrow-left" d="M38,42 Q48,22 58,42" stroke="#6a3f79" stroke-width="3" fill="none" />
+  <path id="eyebrow-right" d="M82,42 Q92,22 102,42" stroke="#6a3f79" stroke-width="3" fill="none" />
+  
+  <!-- 鼻子 -->
+  <path d="M63,70 Q70,75 77,70" fill="#a375a7" stroke="#6c4a7b" stroke-width="1" />
+  
+  <!-- 嘴巴 -->
+  <path id="mouth-neutral" d="M50,85 Q70,95 90,85" stroke="#6c4a7b" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path id="mouth-smile" d="M45,80 Q70,110 95,80" stroke="#6c4a7b" stroke-width="3" fill="none" stroke-linecap="round" style="display:none;"/>
+  <path id="mouth-big-smile" d="M40,75 Q70,120 100,75" stroke="#6c4a7b" stroke-width="3" fill="none" stroke-linecap="round" style="display:none;"/>
+  <path id="mouth-sad" d="M50,100 Q70,80 90,100" stroke="#6c4a7b" stroke-width="3" fill="none" stroke-linecap="round" style="display:none;"/>
+  
+  <!-- 胡须 -->
+  <line x1="25" y1="85" x2="55" y2="90" stroke="#6c4a7b" stroke-width="2" />
+  <line x1="25" y1="95" x2="55" y2="95" stroke="#6c4a7b" stroke-width="2" />
+  <line x1="25" y1="105" x2="55" y2="100" stroke="#6c4a7b" stroke-width="2" />
+  
+  <line x1="105" y1="85" x2="75" y2="90" stroke="#6c4a7b" stroke-width="2" />
+  <line x1="105" y1="95" x2="75" y2="95" stroke="#6c4a7b" stroke-width="2" />
+  <line x1="105" y1="105" x2="75" y2="100" stroke="#6c4a7b" stroke-width="2" />
+</svg>
+
+<script>
+  // 题目数据
+  const data = [
+    { letter: 'A, a', ipa: '[a:]' },
+    { letter: 'B, b', ipa: '[be:]' },
+    { letter: 'C, c', ipa: '[tse:]' },
+    { letter: 'D, d', ipa: '[de:]' },
+    { letter: 'E, e', ipa: '[e:]' },
+    { letter: 'F, f', ipa: '[ɛf]' },
+    { letter: 'G, g', ipa: '[ge:]' },
+    { letter: 'H, h', ipa: '[ha:]' },
+    { letter: 'I, i', ipa: '[i:]' },
+    { letter: 'J, j', ipa: '[jɔt]' },
+    { letter: 'K, k', ipa: '[ka:]' },
+    { letter: 'L, l', ipa: '[ɛl]' },
+    { letter: 'M, m', ipa: '[ɛm]' },
+    { letter: 'N, n', ipa: '[ɛn]' },
+    { letter: 'O, o', ipa: '[o:]' },
+    { letter: 'P, p', ipa: '[pe:]' },
+    { letter: 'Q, q', ipa: '[ku:]' },
+    { letter: 'R, r', ipa: '[ɛr]' },
+    { letter: 'S, s', ipa: '[ɛs]' },
+    { letter: 'T, t', ipa: '[te:]' },
+    { letter: 'U, u', ipa: '[u:]' },
+    { letter: 'V, v', ipa: '[fao]' },
+    { letter: 'W, w', ipa: '[ve:]' },
+    { letter: 'X, x', ipa: '[iks]' },
+    { letter: 'Y, y', ipa: '[ypsilɔn]' },
+    { letter: 'Z, z', ipa: '[tsɛt]' },
+    { letter: 'Ä, ä', ipa: '[ɛ:]' },
+    { letter: 'Ö, ö', ipa: '[øː]' },
+    { letter: 'Ü, ü', ipa: '[y:]' },
+    { letter: 'ß', ipa: '[ɛs-tsɛt]' }
+  ];
+
+  let questionType = 'letter2ipa'; // 字母→音标 or 音标→字母
+  let currentIndex = 0;
+  let wrongIndexes = [];
+  let score = 0;
+  let dataForQuiz = [];
+  let combo = 0;
+
+  function shuffle(array) {
+    for (let i = array.length -1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function initWrongPractice() {
+    if (wrongIndexes.length === 0) return false;
+    currentIndex = 0;
+    questionType = 'letter2ipa';
+    dataForQuiz = wrongIndexes.map(i => data[i]);
+    shuffle(dataForQuiz);
+    return true;
+  }
+
+  function loadQuestion() {
+    document.getElementById('score').textContent = `当前得分: ${score} / ${dataForQuiz.length}`;
+    resetBackground();
+    hideRewardPopup();
+    updateCombo(0, true);
+    const q = dataForQuiz[currentIndex];
+    const quizDiv = document.getElementById('quiz-container');
+    quizDiv.innerHTML = '';
+    if (questionType === 'letter2ipa') {
+      quizDiv.innerHTML = `
+        <div class="question">
+          <label>请写出字母 <strong>${q.letter}</strong> 对应的音标（含方括号）:</label>
+          <input type="text" id="answer" autocomplete="off" autocorrect="off" autocapitalize="none" />
+          <div id="feedback"></div>
+        </div>
+      `;
+    } else {
+      quizDiv.innerHTML = `
+        <div class="question">
+          <label>请写出音标 <strong>${q.ipa}</strong> 对应的字母:</label>
+          <input type="text" id="answer" autocomplete="off" autocorrect="off" autocapitalize="none" />
+          <div id="feedback"></div>
+        </div>
+      `;
+    }
+    document.getElementById('answer').focus();
+    document.getElementById('next-btn').disabled = true;
+    document.getElementById('submit-btn').disabled = false;
+  }
+
+  function isAnswerCorrect(userInput, correctLetters) {
+    const user = userInput.toLowerCase().replace(/[\s,]/g, '');
+    const correct = correctLetters.toLowerCase().replace(/[\s,]/g, '');
+    if (user.length === 1) {
+      const correctSet = new Set(correct.split(''));
+      return correctSet.has(user);
+    }
+    return false;
+  }
+
+  function checkAnswer() {
+    const userInputRaw = document.getElementById('answer').value.trim();
+    const q = dataForQuiz[currentIndex];
+    const feedback = document.getElementById('feedback');
+    let correct = false;
+
+    if (questionType === 'letter2ipa') {
+      const userInput = userInputRaw.toLowerCase().replace(/\s/g, '');
+      const correctAnswer = q.ipa.toLowerCase().replace(/\s/g, '');
+      correct = (userInput === correctAnswer);
+    } else {
+      correct = isAnswerCorrect(userInputRaw, q.letter);
+    }
+
+    if (correct) {
+      feedback.textContent = '✔️ 答对了！';
+      feedback.className = 'correct';
+      score++;
+      const wrongPos = wrongIndexes.indexOf(data.indexOf(q));
+      if (wrongPos !== -1) {
+        wrongIndexes.splice(wrongPos, 1);
+      }
+      combo++;
+      showReward();
+      animateScore();
+      updateCombo(combo);
+      changeCharacterExpression(true, combo);
+      setTimeout(() => {
+        nextQuestion();
+      }, 900);
+    } else {
+      feedback.textContent = `❌ 答错了！正确答案是：${questionType==='letter2ipa'?q.ipa:q.letter}`;
+      feedback.className = 'wrong';
+      if (!wrongIndexes.includes(data.indexOf(q))) {
+        wrongIndexes.push(data.indexOf(q));
+      }
+      combo = 0;
+      clearReward();
+      resetBackground();
+      updateCombo(combo);
+      changeCharacterExpression(false);
+      document.getElementById('submit-btn').disabled = true;
+      document.getElementById('next-btn').disabled = false;
+    }
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex >= dataForQuiz.length) {
+      if (wrongIndexes.length > 0) {
+        alert('进入错题复习！');
+        if (initWrongPractice()) {
+          score = 0;
+          combo = 0;
+          loadQuestion();
+          document.getElementById('submit-btn').disabled = false;
+          document.getElementById('next-btn').disabled = true;
+          return;
+        }
+      }
+      document.getElementById('quiz-container').innerHTML = `<h3 style="text-align:center;">测验结束！最终得分：${score} / ${dataForQuiz.length}</h3>`;
+      document.getElementById('submit-btn').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
+      document.getElementById('restart-btn').style.display = 'inline-block';
+      document.getElementById('score').textContent = '';
+      document.getElementById('combo').textContent = '';
+      hideRewardPopup();
+      resetBackground();
+      changeCharacterExpression(true, 10);
+      return;
+    }
+    loadQuestion();
+  }
+
+  function showReward() {
+    document.body.style.backgroundColor = '#f6d6f2';
+    const popup = document.getElementById('reward-popup');
+    popup.classList.add('show');
+    const ding = document.getElementById('ding-sound');
+    ding.currentTime = 0;
+    ding.play();
+    setTimeout(() => {
+      popup.classList.remove('show');
+      resetBackground();
+    }, 1300);
+  }
+
+  function hideRewardPopup() {
+    const popup = document.getElementById('reward-popup');
+    popup.classList.remove('show');
+  }
+
+  function resetBackground() {
+    document.body.style.backgroundColor = '#f3eaf7';
+  }
+
+  function animateScore() {
+    const scoreDiv = document.getElementById('score');
+    scoreDiv.style.transform = 'scale(1.45)';
+    setTimeout(() => {
+      scoreDiv.style.transform = 'scale(1)';
+    }, 300);
+  }
+
+  function updateCombo(count, clear=false) {
+    const comboDiv = document.getElementById('combo');
+    if(clear || count === 0) {
+      comboDiv.textContent = '';
+      return;
+    }
+    comboDiv.textContent = `😸 连续答对 ${count} 题！`;
+  }
+
+  // 控制猫咪表情：眨眼 + 嘴巴变化
+  const leftEye = document.getElementById('eye-left-white');
+  const rightEye = document.getElementById('eye-right-white');
+  const leftPupil = document.getElementById('eye-left-pupil');
+  const rightPupil = document.getElementById('eye-right-pupil');
+  const mouthNeutral = document.getElementById('mouth-neutral');
+  const mouthSmile = document.getElementById('mouth-smile');
+  const mouthBigSmile = document.getElementById('mouth-big-smile');
+  const mouthSad = document.getElementById('mouth-sad');
+  const eyebrowLeft = document.getElementById('eyebrow-left');
+  const eyebrowRight = document.getElementById('eyebrow-right');
+
+  // 眨眼动画
+  function blink() {
+    leftEye.setAttribute('ry', 5);
+    rightEye.setAttribute('ry', 5);
+    leftPupil.style.display = 'none';
+    rightPupil.style.display = 'none';
+    setTimeout(() => {
+      leftEye.setAttribute('ry', 22);
+      rightEye.setAttribute('ry', 22);
+      leftPupil.style.display = 'block';
+      rightPupil.style.display = 'block';
+    }, 350);
+  }
+  setInterval(() => {
+    blink();
+  }, 6000 + Math.random() * 4000);
+
+  // 改变表情
+  function changeCharacterExpression(correct, comboCount=0) {
+    if (correct) {
+      eyebrowLeft.setAttribute('d', 'M38,35 Q48,15 58,35');
+      eyebrowRight.setAttribute('d', 'M82,35 Q92,15 102,35');
+      if (comboCount >= 7) {
+        mouthNeutral.style.display = 'none';
+        mouthSmile.style.display = 'none';
+        mouthBigSmile.style.display = 'block';
+        mouthSad.style.display = 'none';
+      } else if (comboCount >= 3) {
+        mouthNeutral.style.display = 'none';
+        mouthSmile.style.display = 'block';
+        mouthBigSmile.style.display = 'none';
+        mouthSad.style.display = 'none';
+      } else {
+        mouthNeutral.style.display = 'block';
+        mouthSmile.style.display = 'none';
+        mouthBigSmile.style.display = 'none';
+        mouthSad.style.display = 'none';
+      }
+    } else {
+      eyebrowLeft.setAttribute('d', 'M38,45 Q48,60 58,45');
+      eyebrowRight.setAttribute('d', 'M82,45 Q92,60 102,45');
+      mouthNeutral.style.display = 'none';
+      mouthSmile.style.display = 'none';
+      mouthBigSmile.style.display = 'none';
+      mouthSad.style.display = 'block';
+    }
+  }
+  changeCharacterExpression(false);
+
+  // 按钮事件
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    checkAnswer();
+  });
+  document.getElementById('next-btn').addEventListener('click', () => {
+    nextQuestion();
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('next-btn').disabled = true;
+  });
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    score = 0;
+    combo = 0;
+    wrongIndexes = [];
+    dataForQuiz = [...data];
+    shuffle(dataForQuiz);
+    currentIndex = 0;
+    loadQuestion();
+    document.getElementById('submit-btn').style.display = 'inline-block';
+    document.getElementById('next-btn').style.display = 'inline-block';
+    document.getElementById('restart-btn').style.display = 'none';
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('next-btn').disabled = true;
+    updateCombo(0, true);
+    changeCharacterExpression(false);
+  });
+  document.getElementById('toggle-btn').addEventListener('click', () => {
+    questionType = (questionType === 'letter2ipa') ? 'ipa2letter' : 'letter2ipa';
+    currentIndex = 0;
+    score = 0;
+    combo = 0;
+    wrongIndexes = [];
+    dataForQuiz = [...data];
+    shuffle(dataForQuiz);
+    loadQuestion();
+    updateCombo(0, true);
+    changeCharacterExpression(false);
+  });
+
+  // 回车提交
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !document.getElementById('submit-btn').disabled) {
+      checkAnswer();
+    }
+  });
+
+  // 初始化开始
+  dataForQuiz = [...data];
+  shuffle(dataForQuiz);
+  loadQuestion();
+
+</script>
+</body>
+</html>
